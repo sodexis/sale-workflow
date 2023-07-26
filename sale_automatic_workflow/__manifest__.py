@@ -19,6 +19,7 @@
         "views/sale_view.xml",
         "views/sale_workflow_process_view.xml",
         "data/automatic_workflow_data.xml",
+        "views/res_partner_view.xml",
     ],
     "installable": True,
 }

@@ -73,3 +73,9 @@ class SaleOrder(models.Model):
                 res |= super(SaleOrder, self - sales_keep_order_date).write(vals)
                 return res
         return super().write(vals)
+
+    @api.onchange("partner_id")
+    def _onchange_partner_id_warning(self):
+        res = super()._onchange_partner_id_warning()
+        self.workflow_process_id = self.partner_id.workflow_process_id.id
+        return res
