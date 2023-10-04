@@ -30,13 +30,6 @@ class SaleOrder(models.Model):
         )
         return res
 
-    @api.onchange("partner_id")
-    def _onchange_partner_id_warning(self):
-        res = super()._onchange_partner_id_warning()
-        if not self.workflow_process_id:
-            self.workflow_process_id = self.partner_id.workflow_process_id.id
-        return res
-
     @api.depends("delivery_status")
     def _compute_all_qty_delivered(self):
         for order in self:

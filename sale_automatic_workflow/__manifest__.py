@@ -18,7 +18,6 @@
         "security/ir.model.access.csv",
         "views/sale_view.xml",
         "views/sale_workflow_process_view.xml",
-        "views/res_partner_views.xml",
         "data/automatic_workflow_data.xml",
     ],
     "installable": True,
