@@ -130,3 +130,4 @@ class SaleWorkflowProcess(models.Model):
     payment_filter_domain = fields.Text(
         related="payment_filter_id.domain",
     )
+    default = fields.Boolean(company_dependent=True)

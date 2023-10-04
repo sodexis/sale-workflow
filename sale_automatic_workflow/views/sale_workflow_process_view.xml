@@ -39,6 +39,14 @@
                                 </span>
                             </div>
                         </div>
+                        <div class="row">
+                            <div class="col-sm-4">
+                                <label for="default" class="col-lg-7 o_light_label" />
+                                <span>
+                                    <field name="default" />
+                                </span>
+                            </div>
+                        </div>
                     </div>
                     <br />
                     <div class="container" name="workflow_options">

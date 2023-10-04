@@ -9,6 +9,14 @@ from odoo import _, api, fields, models
 class SaleOrder(models.Model):
     _inherit = "sale.order"
 
+    @api.model
+    def default_get(self, fields):
+        res = super(SaleOrder, self).default_get(fields)
+        if 'workflow_process_id' in fields:
+            res['workflow_process_id'] = self.env['sale.workflow.process'].search(
+                [('default', '=', True)], limit=1).id
+        return res
+
     workflow_process_id = fields.Many2one(
         comodel_name="sale.workflow.process",
         string="Automatic Workflow",
@@ -77,5 +85,6 @@ class SaleOrder(models.Model):
     @api.onchange("partner_id")
     def _onchange_partner_id_warning(self):
         res = super()._onchange_partner_id_warning()
-        self.workflow_process_id = self.partner_id.workflow_process_id.id
+        if not self.workflow_process_id:
+            self.workflow_process_id = self.partner_id.workflow_process_id.id
         return res
