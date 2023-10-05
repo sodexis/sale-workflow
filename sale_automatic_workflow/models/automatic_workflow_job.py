@@ -182,7 +182,9 @@ class AutomaticWorkflowJob(models.Model):
         _logger.debug("Invoices to Register Payment: %s", invoices.ids)
         for invoice in invoices:
             with savepoint(self.env.cr, auto_commit):
-                self._register_payment_invoice(invoice)
+                self.with_company(invoice.company_id)._register_payment_invoice(
+                    invoice.with_company(invoice.company_id)
+                )
         return
 
     def _register_payment_invoice(self, invoice):
