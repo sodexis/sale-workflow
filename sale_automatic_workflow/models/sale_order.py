@@ -12,9 +12,12 @@ class SaleOrder(models.Model):
     @api.model
     def default_get(self, fields):
         res = super(SaleOrder, self).default_get(fields)
-        if 'workflow_process_id' in fields:
-            res['workflow_process_id'] = self.env['sale.workflow.process'].search(
-                [('default', '=', True)], limit=1).id
+        if "workflow_process_id" in fields:
+            res["workflow_process_id"] = (
+                self.env["sale.workflow.process"]
+                .search([("default", "=", True)], limit=1)
+                .id
+            )
         return res
 
     workflow_process_id = fields.Many2one(

@@ -131,3 +131,5 @@ class SaleWorkflowProcess(models.Model):
         related="payment_filter_id.domain",
     )
     default = fields.Boolean(company_dependent=True)
+    auto_commit = fields.Boolean()
+    search_limit = fields.Integer(default=20)
