@@ -19,6 +19,7 @@ class SaleOrder(models.Model):
         string="All quantities delivered",
         store=True,
     )
+    skip_invoice_creation = fields.Boolean()
 
     @api.model
     def default_get(self, fields_list):
