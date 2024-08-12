@@ -6,7 +6,8 @@
 import logging
 from contextlib import contextmanager
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.tools import exception_to_unicode
 from odoo.tools.safe_eval import safe_eval
 
 _logger = logging.getLogger(__name__)
@@ -46,7 +47,24 @@ class AutomaticWorkflowJob(models.Model):
             [("id", "=", sale.id)] + domain_filter
         ):
             return "{} {} job bypassed".format(sale.display_name, sale)
-        sale.action_confirm()
+        try:
+            sale.action_confirm()
+        except Exception as e:
+            self._cr.rollback()
+            _logger.exception("Automatic Workflow Exception: \n %s" % e)
+            sale.message_post(
+                body=(
+                    _("<b style='color:red'>Automatic Workflow Exception</b> "
+                      "<br/>An exception occurred. <br/> <code> %s </code><br/>"
+                      "The order has been removed from automatic validation."
+                      " Manual intervention is required."
+                     )
+                    % "\n".join(exception_to_unicode(e))
+                )
+            )
+            sale.write({"skip_so_validation": True})
+            self._cr.commit()
+
         return "{} {} confirmed successfully".format(sale.display_name, sale)
 
     def _do_send_order_confirmation_mail(self, sale):
@@ -208,10 +226,12 @@ class AutomaticWorkflowJob(models.Model):
     def run_with_workflow(self, sale_workflow):
         workflow_domain = [("workflow_process_id", "=", sale_workflow.id)]
         if sale_workflow.validate_order:
+            skip_so_validation = [("skip_so_validation", "=", False)]
             self.with_context(
                 send_order_confirmation_mail=sale_workflow.send_order_confirmation_mail
             )._validate_sale_orders(
-                safe_eval(sale_workflow.order_filter_id.domain) + workflow_domain,
+                safe_eval(sale_workflow.order_filter_id.domain)
+                + workflow_domain + skip_so_validation,
                 auto_commit=sale_workflow.auto_commit,
                 limit=sale_workflow.search_limit or None,
             )

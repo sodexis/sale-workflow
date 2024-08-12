@@ -20,6 +20,7 @@ class SaleOrder(models.Model):
         store=True,
     )
     skip_invoice_creation = fields.Boolean()
+    skip_so_validation = fields.Boolean()
 
     @api.model
     def default_get(self, fields_list):
