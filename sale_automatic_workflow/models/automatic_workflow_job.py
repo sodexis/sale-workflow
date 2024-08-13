@@ -52,16 +52,6 @@ class AutomaticWorkflowJob(models.Model):
         except Exception as e:
             self._cr.rollback()
             _logger.exception("Automatic Workflow Exception: \n %s" % e)
-            sale.message_post(
-                body=(
-                    _("<b style='color:red'>Automatic Workflow Exception</b> "
-                      "<br/>An exception occurred. <br/> <code> %s </code><br/>"
-                      "The order has been removed from automatic validation."
-                      " Manual intervention is required."
-                     )
-                    % "\n".join(exception_to_unicode(e))
-                )
-            )
             sale.write({"skip_so_validation": True})
             self._cr.commit()
 
