@@ -70,11 +70,11 @@ class AutomaticWorkflowJob(models.Model):
         _logger.debug("Sale Orders to validate: %s", sales.ids)
         for sale in sales:
             with savepoint(self.env.cr, auto_commit):
-                self._do_validate_sale_order(
+                self.with_company(sale.company_id)._do_validate_sale_order(
                     sale.with_company(sale.company_id), order_filter
                 )
                 if self.env.context.get("send_order_confirmation_mail"):
-                    self._do_send_order_confirmation_mail(sale)
+                    self.with_company(sale.company_id)._do_send_order_confirmation_mail(sale)
 
     def _do_create_invoice(self, sale, domain_filter):
         """Create an invoice for a sales order, filter ensure no duplication"""
@@ -95,7 +95,7 @@ class AutomaticWorkflowJob(models.Model):
         _logger.debug("Sale Orders to create Invoice: %s", sales.ids)
         for sale in sales:
             with savepoint(self.env.cr, auto_commit):
-                self._do_create_invoice(
+                self.with_company(sale.company_id)._do_create_invoice(
                     sale.with_company(sale.company_id), create_filter
                 )
 
@@ -119,7 +119,7 @@ class AutomaticWorkflowJob(models.Model):
         _logger.debug("Invoices to validate: %s", invoices.ids)
         for invoice in invoices:
             with savepoint(self.env.cr, auto_commit):
-                self._do_validate_invoice(
+                self.with_company(invoice.company_id)._do_validate_invoice(
                     invoice.with_company(invoice.company_id), validate_invoice_filter
                 )
 
@@ -187,7 +187,7 @@ class AutomaticWorkflowJob(models.Model):
         _logger.debug("Pickings to validate: %s", pickings.ids)
         for picking in pickings:
             with savepoint(self.env.cr, auto_commit):
-                self._do_validate_picking(picking, picking_filter)
+                self.with_company(picking.company_id)._do_validate_picking(picking, picking_filter)
 
     def _do_sale_done(self, sale, domain_filter):
         """Set a sales order to done, filter ensure no duplication"""
@@ -205,7 +205,7 @@ class AutomaticWorkflowJob(models.Model):
         _logger.debug("Sale Orders to done: %s", sales.ids)
         for sale in sales:
             with savepoint(self.env.cr, auto_commit):
-                self._do_sale_done(sale.with_company(sale.company_id), sale_done_filter)
+                self.with_company(sale.company_id)._do_sale_done(sale.with_company(sale.company_id), sale_done_filter)
 
     def _prepare_dict_account_payment(self, invoice):
         partner_type = (
@@ -228,7 +228,9 @@ class AutomaticWorkflowJob(models.Model):
         _logger.debug("Invoices to Register Payment: %s", invoices.ids)
         for invoice in invoices:
             with savepoint(self.env.cr, auto_commit):
-                self._register_payment_invoice(invoice)
+                self.with_company(invoice.company_id)._register_payment_invoice(
+                    invoice.with_company(invoice.company_id)
+                )
         return
 
     def _register_payment_invoice(self, invoice):
