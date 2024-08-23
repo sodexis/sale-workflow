@@ -51,7 +51,7 @@ class AutomaticWorkflowJob(models.Model):
             sale.action_confirm()
         except Exception as e:
             self._cr.rollback()
-            _logger.exception("Automatic Workflow Exception: \n %s" % e)
+            _logger.exception("Automatic Workflow Exception on %s\n %s" % (sale.name, e))
             sale.write({"skip_so_validation": True})
             self._cr.commit()
 
