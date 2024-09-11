@@ -113,7 +113,13 @@ class AutomaticWorkflowJob(models.Model):
             [("id", "=", invoice.id)] + domain_filter
         ):
             return "{} {} job bypassed".format(invoice.display_name, invoice)
-        invoice.with_company(invoice.company_id).action_post()
+        try:
+            invoice.with_company(invoice.company_id).action_post()
+        except Exception as e:
+            self._cr.rollback()
+            _logger.exception("Automatic Workflow Exception on %s\n %s" % (invoice.name, e))
+            invoice.write({"skip_invoice_validation": True})
+            self._cr.commit()
         return "{} {} validate invoice successfully".format(
             invoice.display_name, invoice
         )
@@ -239,9 +245,10 @@ class AutomaticWorkflowJob(models.Model):
                 limit=sale_workflow.search_limit or None,
             )
         if sale_workflow.validate_invoice:
+            skip_invoice_validation = [("skip_invoice_validation", "=", False)]
             self._validate_invoices(
                 safe_eval(sale_workflow.validate_invoice_filter_id.domain)
-                + workflow_domain,
+                + workflow_domain + skip_invoice_validation,
                 auto_commit=sale_workflow.auto_commit,
                 limit=sale_workflow.search_limit or None,
             )
