@@ -12,3 +12,7 @@ class AccountMove(models.Model):
     workflow_process_id = fields.Many2one(
         comodel_name="sale.workflow.process", string="Sale Workflow Process"
     )
+
+    skip_invoice_validation = fields.Boolean(
+        string="Skip Invoice Validation",
+    )
