@@ -6,7 +6,8 @@
 import logging
 from contextlib import contextmanager
 
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.tools import exception_to_unicode
 from odoo.tools.safe_eval import safe_eval
 
 _logger = logging.getLogger(__name__)
@@ -46,7 +47,14 @@ class AutomaticWorkflowJob(models.Model):
             [("id", "=", sale.id)] + domain_filter
         ):
             return "{} {} job bypassed".format(sale.display_name, sale)
-        sale.action_confirm()
+        try:
+            sale.action_confirm()
+        except Exception as e:
+            self._cr.rollback()
+            _logger.exception("Automatic Workflow Exception on %s\n %s" % (sale.name, e))
+            sale.write({"skip_so_validation": True})
+            self._cr.commit()
+
         return "{} {} confirmed successfully".format(sale.display_name, sale)
 
     def _do_send_order_confirmation_mail(self, sale):
@@ -105,7 +113,13 @@ class AutomaticWorkflowJob(models.Model):
             [("id", "=", invoice.id)] + domain_filter
         ):
             return "{} {} job bypassed".format(invoice.display_name, invoice)
-        invoice.with_company(invoice.company_id).action_post()
+        try:
+            invoice.with_company(invoice.company_id).action_post()
+        except Exception as e:
+            self._cr.rollback()
+            _logger.exception("Automatic Workflow Exception on %s\n %s" % (invoice.name, e))
+            invoice.write({"skip_invoice_validation": True})
+            self._cr.commit()
         return "{} {} validate invoice successfully".format(
             invoice.display_name, invoice
         )
@@ -254,10 +268,12 @@ class AutomaticWorkflowJob(models.Model):
     def run_with_workflow(self, sale_workflow):
         workflow_domain = [("workflow_process_id", "=", sale_workflow.id)]
         if sale_workflow.validate_order:
+            skip_so_validation = [("skip_so_validation", "=", False)]
             self.with_context(
                 send_order_confirmation_mail=sale_workflow.send_order_confirmation_mail
             )._validate_sale_orders(
-                safe_eval(sale_workflow.order_filter_id.domain) + workflow_domain,
+                safe_eval(sale_workflow.order_filter_id.domain)
+                + workflow_domain + skip_so_validation,
                 auto_commit=sale_workflow.auto_commit,
                 limit=sale_workflow.search_limit or None,
             )
@@ -275,9 +291,10 @@ class AutomaticWorkflowJob(models.Model):
                 limit=sale_workflow.search_limit or None,
             )
         if sale_workflow.validate_invoice:
+            skip_invoice_validation = [("skip_invoice_validation", "=", False)]
             self._validate_invoices(
                 safe_eval(sale_workflow.validate_invoice_filter_id.domain)
-                + workflow_domain,
+                + workflow_domain + skip_invoice_validation,
                 auto_commit=sale_workflow.auto_commit,
                 limit=sale_workflow.search_limit or None,
             )
