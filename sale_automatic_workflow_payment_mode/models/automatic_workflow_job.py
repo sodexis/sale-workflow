@@ -16,7 +16,7 @@ class AutomaticWorkflowJob(models.Model):
         if invoice.payment_mode_id:
             payment_mode = invoice.payment_mode_id
             vals["payment_type"] = payment_mode.payment_type
-            vals["payment_method_id"] = payment_mode.payment_method_id.id
+            vals["payment_method_line_id"] = payment_mode.payment_method_line_id.id
             vals["journal_id"] = payment_mode.fixed_journal_id.id
         return vals
 
